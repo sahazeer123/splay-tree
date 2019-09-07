@@ -16,7 +16,7 @@ private:
 	int no_nodes;
 	Splay_node *root;
 	Splay_node *createNode(int);
-	Splay_node *rotateRight(Splay_node *);
+	Splay_node *rightRotate(Splay_node *);
 	Splay_node *leftRotate(Splay_node *);
 	Splay_node *splay(Splay_node *,int);
 	int find(Splay_node *,int);
@@ -24,6 +24,8 @@ private:
 	void pre_orderHelp(Splay_node *,vector<int>&);
 	void freeTree(Splay_node *);
 	Splay_node *removeHelp(Splay_node *,int);
+	Splay_node * bstSearch(Splay_node *,int);
+	Splay_node * bstInsert(Splay_node *,int);
 public:
 	splay_tree_implementation();
 	int get_num_nodes();
@@ -50,7 +52,7 @@ Splay_node *splay_tree_implementation::createNode(int data)
 	node -> left = node -> right = NULL;
 	return node;
 }
-Splay_node *splay_tree_implementation::rotateRight(Splay_node *x) 
+Splay_node *splay_tree_implementation::rightRotate(Splay_node *x) 
 {  
     Splay_node *y = x->left;  
     x->left = y->right;  
@@ -62,40 +64,40 @@ Splay_node *splay_tree_implementation::leftRotate(Splay_node *x)
     Splay_node *y = x->right;  
     x->right = y->left;  
     y->left = x;  
-    return y;  
+    return y; 
 }
 Splay_node *splay_tree_implementation::splay(Splay_node *rootSrc,int element)
 {  
-    if (rootSrc == NULL || rootSrc->data == element)  
+     if (rootSrc== NULL || rootSrc->data == element)  
         return rootSrc;  
     if (rootSrc->data > element)  
-    { 
-        if (rootSrc->left == NULL) return rootSrc;   
-        if (rootSrc->left->data > element)  
-        {   
-            rootSrc->left->left = splay(rootSrc->left->left, element);
-            rootSrc = rotateRight(rootSrc);  
-        }  
-        else if (rootSrc->left->data< element)   
-        {    
-            rootSrc->left->right = splay(rootSrc->left->right, element);  
-            if (rootSrc->left->right != NULL)  
-                rootSrc->left = leftRotate(root->left);  
-        }   
-        return (rootSrc->left == NULL)? rootSrc: rotateRight(rootSrc);  
-    }  
-    else 
     {   
-        if (rootSrc->right == NULL) return rootSrc;  
+        if (rootSrc->left == NULL) return rootSrc;    
+        if (rootSrc->left->data > element)  
+        {  
+            rootSrc->left->left = splay(rootSrc->left->left, element);    
+            rootSrc = rightRotate(rootSrc);  
+        }  
+        else if (rootSrc->left->data < element)  
+        {  
+            rootSrc->left->right = splay(rootSrc->left->right, element);    
+            if (rootSrc->left->right != NULL)  
+                rootSrc->left = leftRotate(rootSrc->left);  
+        }   
+        return (rootSrc->left == NULL)? rootSrc: rightRotate(rootSrc);  
+    }  
+    else
+    {   
+        if (rootSrc->right == NULL) return rootSrc;    
         if (rootSrc->right->data > element)  
-        {    
+        {   
             rootSrc->right->left = splay(rootSrc->right->left, element);  
             if (rootSrc->right->left != NULL)  
-                rootSrc->right = rotateRight(rootSrc->right);  
+                rootSrc->right = rightRotate(rootSrc->right);  
         }  
         else if (rootSrc->right->data < element) 
-        {   
-            rootSrc->right->right = splay(rootSrc->right->right,element);  
+        {    
+            rootSrc->right->right = splay(rootSrc->right->right, element);  
             rootSrc = leftRotate(rootSrc);  
         }   
         return (rootSrc->right == NULL)? rootSrc: leftRotate(rootSrc);  
@@ -112,36 +114,47 @@ int splay_tree_implementation::find(Splay_node * rootSrc,int element)
 		return 0;
 	if(rootSrc -> data == element)
 		return 1;
-	return find(rootSrc -> left,element) || find(rootSrc -> right,element);
+	if(element < rootSrc -> data)
+		return find(rootSrc -> left,element);
+	else
+		return find(rootSrc -> right,element);
+}
+Splay_node * splay_tree_implementation::bstSearch(Splay_node *rootSrc,int element)
+{
+	if(rootSrc == NULL || rootSrc -> data == element)
+		return rootSrc;
+	if(element < rootSrc -> data)
+		return bstSearch(rootSrc -> left,element);
+	else
+		return bstSearch(rootSrc -> right,element);
+}
+Splay_node * splay_tree_implementation::bstInsert(Splay_node *rootSrc,int element)
+{
+	if(rootSrc == NULL)
+	{
+		rootSrc = createNode(element);
+		return rootSrc;
+	}
+	if(element < rootSrc -> data)
+		rootSrc -> left = bstInsert(rootSrc -> left,element);
+	else
+		rootSrc -> right = bstInsert(rootSrc -> right,element);
+	return rootSrc;
 }
 void splay_tree_implementation::insert(int element)
 {
-	if(root == NULL)
+	Splay_node * temp = bstSearch(root,element);
+	if(temp != NULL)
 	{
-		no_nodes++;
-		root = createNode(element);
+		root = splay(root,element);
 		return ;
-	}
-	root = splay(root,element);
-	if(root -> data == element)
-	{
-		return ;
-	}
-	Splay_node *newNode = createNode(element);
-	no_nodes++;
-	if(element < root -> data)
-	{
-		newNode -> right = root;
-		newNode -> left = root -> left;
-		root -> left = NULL;
 	}
 	else
 	{
-		newNode -> left = root;
-		newNode -> right = root -> right;
-		root -> right = NULL;
+		no_nodes++;
+		root = bstInsert(root,element);
+		root = splay(root,element);
 	}
-	root = newNode;
 }
 void splay_tree_implementation::remove(int element)
 {
@@ -193,13 +206,13 @@ vector<int> splay_tree_implementation::pre_order()
 	pre_orderHelp(root,result);
 	return result;
 }
-void splay_tree_implementation::pre_orderHelp(Splay_node *root,vector<int>&result)
+void splay_tree_implementation::pre_orderHelp(Splay_node *rootSrc,vector<int>&result)
 {
-	if(root != NULL)
+	if(rootSrc != NULL)
 	{
-		result.push_back(root -> data);
-		pre_orderHelp(root -> left,result);
-		pre_orderHelp(root -> right,result);
+		result.push_back(rootSrc -> data);
+		pre_orderHelp(rootSrc -> left,result);
+		pre_orderHelp(rootSrc -> right,result);
 	}
 }
 splay_tree_implementation::~splay_tree_implementation()
