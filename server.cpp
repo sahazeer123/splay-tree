@@ -23,9 +23,12 @@ private:
 	void post_orderHelp(Splay_node *,vector<int>&);
 	void pre_orderHelp(Splay_node *,vector<int>&);
 	void freeTree(Splay_node *);
-	Splay_node *removeHelp(Splay_node *,int);
+	void removeHelp(Splay_node *&,int);
 	Splay_node * bstSearch(Splay_node *,int);
 	Splay_node * bstInsert(Splay_node *,int);
+	Splay_node * minValNode(Splay_node *);
+	void searchKey(Splay_node *&,int,Splay_node *&);
+	void delete_dup(Splay_node *,int);
 public:
 	splay_tree_implementation();
 	int get_num_nodes();
@@ -158,32 +161,112 @@ void splay_tree_implementation::insert(int element)
 }
 void splay_tree_implementation::remove(int element)
 {
-	root = removeHelp(root,element);
+	Splay_node * parent = NULL;
+	Splay_node * current = root;
+    removeHelp(parent,element);
+    if(parent == nullptr)
+    	return ;
+    else
+    	root = splay(root,parent -> data);
 }
-Splay_node *splay_tree_implementation::removeHelp(Splay_node *rootSrc,int element)
+void splay_tree_implementation::searchKey(Splay_node *&current,int element,Splay_node * &parent)
 {
-	Splay_node *temp;
-	if(rootSrc == NULL)
-		return NULL;
-	rootSrc = splay(rootSrc,element);
-	if(element != rootSrc -> data)
+	while(current != nullptr && current -> data != element)
 	{
-		return rootSrc;
+		parent = current;
+		if(element < current -> data)
+			current = current -> left;
+		else
+			current = current -> right;
 	}
-	if(!rootSrc -> left)
+}
+void splay_tree_implementation::removeHelp(Splay_node *&parent,int element)
+{
+	Splay_node * current = root;
+	if(root == NULL)
+		return ;
+	searchKey(current,element,parent);
+	if(current == NULL)
+		return ;
+	no_nodes--;
+	if(current -> left == nullptr && current -> right == nullptr)
 	{
-		temp = rootSrc;
-		rootSrc = rootSrc -> right;
+		if(current != root)
+		{
+			if(parent -> left == current)
+				parent -> left = nullptr;
+			else
+				parent -> right = nullptr;
+		}
+		else
+			root = nullptr;
+		free(current);
+	}
+	else if(current -> left && current -> right)
+	{
+		Splay_node * successor = minValNode(current -> right);
+		int val = successor -> data;
+		current -> data = val;
+		delete_dup(current,val);
 	}
 	else
 	{
-		temp = rootSrc;
-		rootSrc = splay(rootSrc -> left,element);
-		root -> right = temp -> right;
+		Splay_node * child = (current -> left) ? current -> left : current -> right;
+		if(current != root)
+		{
+			if(current == parent -> left)
+				parent -> left = child;
+			else
+		        parent -> right = child;
+		}
+		else
+		   root = child;
+		free(current);
 	}
-	free(temp);
-	no_nodes--;
-	return rootSrc;
+}
+void splay_tree_implementation::delete_dup(Splay_node *rootSrc,int element)
+{
+	Splay_node *parent1 = rootSrc;
+	Splay_node *current1 = rootSrc -> right;
+	if(rootSrc == nullptr)
+		return;
+	searchKey(current1,element,parent1);
+	if(current1 -> left == nullptr && current1 -> right == nullptr)
+	{
+		if(current1 != root)
+		{
+			if(parent1 -> left == current1)
+				parent1 -> left = nullptr;
+			else
+				parent1 -> right = nullptr;
+		}
+		else
+			root = nullptr;
+		free(current1);
+	}
+	else
+	{
+		Splay_node * child = (current1 -> left) ? current1 -> left : current1 -> right;
+		if(current1 != root)
+		{
+			if(current1 == parent1 -> left)
+				parent1 -> left = child;
+			else
+		        parent1 -> right = child;
+		}
+		else
+		   root = child;
+		free(current1);
+	}
+}
+Splay_node *splay_tree_implementation::minValNode(Splay_node *rootSrc)
+{
+	Splay_node *current = rootSrc;
+	while(current && current -> left)
+	{
+		current = current -> left;
+	}
+	return current;
 }
 vector<int> splay_tree_implementation::post_order()
 {
