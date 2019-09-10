@@ -21,6 +21,7 @@ private:
 	Splay_node *splay(Splay_node *,int);
 	int find(Splay_node *,int);
 	void post_orderHelp(Splay_node *,vector<int>&);
+	void inorder_help(Splay_node *,vector<int>&);
 	void pre_orderHelp(Splay_node *,vector<int>&);
 	void freeTree(Splay_node *);
 	void removeHelp(Splay_node *&,int);
@@ -35,6 +36,7 @@ public:
 	int find(int);
 	void insert(int);
 	void remove(int);
+	vector<int> in_order();
 	vector<int>post_order();
 	vector<int>pre_order();
 	~splay_tree_implementation();
@@ -279,8 +281,23 @@ void splay_tree_implementation::post_orderHelp(Splay_node *root,vector<int>&resu
 	if(root != NULL)
 	{
 		post_orderHelp(root -> left,result);
-		post_orderHelp(root -> right,result);
 		result.push_back(root -> data);
+		post_orderHelp(root -> right,result);
+	}
+}
+vector<int> splay_tree_implementation::in_order()
+{
+	vector<int>result;
+	post_orderHelp(root,result);
+	return result;
+}
+void splay_tree_implementation::inorder_help(Splay_node *root,vector<int>&result)
+{
+	if(root != NULL)
+	{
+		inorder_help(root -> left,result);
+		result.push_back(root -> data);
+		inorder_help(root -> right,result);
 	}
 }
 vector<int> splay_tree_implementation::pre_order()
